@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta property="og:title" content="Heart Animation" />
+  <title>Made By Abhiii</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <style>
+    .lyrics-container {
+      position: relative;
+      text-align: center;
+      z-index: 1000;
+      padding: 20px 20px 0;
+      width: 90%;
+      max-width: 700px;
+      margin: 40px auto 0;
+      font-family: 'Poppins', sans-serif;
+      min-height: 150px;
+      height: auto;
+      overflow: visible;
+    }
+
+    .lyric-line {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 0;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+    }
+
+    .word {
+      opacity: 0;
+      font-size: 3rem;
+      font-weight: 700;
+      margin: 0 8px;
+      color: #fff;
+      display: inline-block;
+    }
+
+    audio {
+      display: none;
+    }
+
+    #musicControl {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      width: 3.5rem;
+      height: 3.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 1rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      z-index: 1001;
+      transition: transform 0.2s ease;
+    }
+
+    #musicControl:hover {
+      transform: scale(1.1);
+    }
+
+    #musicControl svg {
+      width: 1.5rem;
+      height: 1.5rem;
+      color: #fff;
+    }
+
+    #musicControl.paused svg {
+      transform: rotate(90deg);
+    }
+
+    @media (max-width: 600px) {
+      .lyrics-container {
+        padding-top: 60px;
+      }
+
+      .lyric-line {
+        top: 40%;
+      }
+    }
+
+    /* ===== PLANES ===== */
+    .plane-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 500;
+      overflow: hidden;
+    }
+
+    .plane {
+      position: absolute;
+      will-change: transform;
+    }
+
+    /* SVG fighter jet */
+    .plane svg {
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
+    }
+
+    /* Trail / contrail */
+    .plane::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: 100%;
+      transform: translateY(-50%);
+      height: 3px;
+      border-radius: 2px;
+      background: linear-gradient(to left, rgba(255, 255, 255, 0.7), transparent);
+      animation: trailPulse 1.2s ease-in-out infinite alternate;
+    }
+
+    .plane.rtl::after {
+      right: auto;
+      left: 100%;
+      transform: translateY(-50%) scaleX(-1);
+      background: linear-gradient(to right, rgba(255, 255, 255, 0.7), transparent);
+    }
+
+    @keyframes trailPulse {
+      from {
+        opacity: 0.5;
+        width: 60px;
+      }
+
+      to {
+        opacity: 1;
+        width: 140px;
+      }
+    }
+
+    /* Fly left→right */
+    @keyframes flyLTR {
+      0% {
+        transform: translateX(-200px);
+        opacity: 0;
+      }
+
+      5% {
+        opacity: 1;
+      }
+
+      95% {
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateX(calc(100vw + 200px));
+        opacity: 0;
+      }
+    }
+
+    /* Fly right→left (mirrored) */
+    @keyframes flyRTL {
+      0% {
+        transform: translateX(calc(100vw + 200px)) scaleX(-1);
+        opacity: 0;
+      }
+
+      5% {
+        opacity: 1;
+      }
+
+      95% {
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateX(-200px) scaleX(-1);
+        opacity: 0;
+      }
+    }
+
+    /* Diagonal top-left → bottom-right */
+    @keyframes flyDiagTR {
+      0% {
+        transform: translate(-200px, -100px) rotate(15deg);
+        opacity: 0;
+      }
+
+      5% {
+        opacity: 1;
+      }
+
+      95% {
+        opacity: 1;
+      }
+
+      100% {
+        transform: translate(calc(100vw + 200px), calc(50vh + 200px)) rotate(15deg);
+        opacity: 0;
+      }
+    }
+
+    /* Diagonal top-right → bottom-left */
+    @keyframes flyDiagTL {
+      0% {
+        transform: translate(calc(100vw + 200px), -100px) scaleX(-1) rotate(-15deg);
+        opacity: 0;
+      }
+
+      5% {
+        opacity: 1;
+      }
+
+      95% {
+        opacity: 1;
+      }
+
+      100% {
+        transform: translate(-200px, calc(50vh + 200px)) scaleX(-1) rotate(-15deg);
+        opacity: 0;
+      }
+    }
+
+    .plane.p1 {
+      top: 12%;
+      animation: flyLTR 7s ease-in-out infinite;
+      animation-delay: 0s;
+    }
+
+    .plane.p2 {
+      top: 68%;
+      animation: flyRTL 9s ease-in-out infinite;
+      animation-delay: 2.5s;
+    }
+
+    .plane.p3 {
+      top: 35%;
+      animation: flyLTR 11s ease-in-out infinite;
+      animation-delay: 5s;
+    }
+
+    .plane.p4 {
+      top: 55%;
+      animation: flyDiagTR 13s linear infinite;
+      animation-delay: 1.5s;
+    }
+
+    .plane.p5 {
+      top: 20%;
+      animation: flyDiagTL 10s linear infinite;
+      animation-delay: 7s;
+    }
+
+    .plane.p6 {
+      top: 80%;
+      animation: flyLTR 8s ease-in-out infinite;
+      animation-delay: 3.8s;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ===== MOVING PLANES ===== -->
+  <div class="plane-layer">
+
+    <!-- Plane 1: small fighter jet, left→right, top -->
+    <div class="plane p1">
+      <svg width="80" height="40" viewBox="0 0 120 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="60" cy="28" rx="52" ry="10" fill="#f5f5f5" />
+        <ellipse cx="96" cy="26" rx="14" ry="8" fill="#90caf9" />
+        <polygon points="110,28 120,28 110,24" fill="#e0e0e0" />
+        <polygon points="45,28 85,28 75,8 55,8" fill="#bdbdbd" />
+        <polygon points="45,28 85,28 75,48 55,48" fill="#9e9e9e" />
+        <polygon points="12,28 28,28 22,12 14,12" fill="#bdbdbd" />
+        <polygon points="12,28 28,28 22,44 14,44" fill="#9e9e9e" />
+        <ellipse cx="60" cy="28" rx="12" ry="5" fill="#757575" />
+        <ellipse cx="9" cy="28" rx="7" ry="4" fill="rgba(255,120,0,0.85)" />
+        <ellipse cx="5" cy="28" rx="4" ry="2.5" fill="rgba(255,220,0,0.9)" />
+      </svg>
+    </div>
+
+    <!-- Plane 2: right→left, lower -->
+    <div class="plane p2 rtl">
+      <svg width="90" height="45" viewBox="0 0 120 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="60" cy="28" rx="52" ry="10" fill="#ffcdd2" />
+        <ellipse cx="96" cy="26" rx="14" ry="8" fill="#ef9a9a" />
+        <polygon points="110,28 120,28 110,24" fill="#e57373" />
+        <polygon points="45,28 85,28 75,8 55,8" fill="#e57373" />
+        <polygon points="45,28 85,28 75,48 55,48" fill="#c62828" />
+        <polygon points="12,28 28,28 22,12 14,12" fill="#e57373" />
+        <polygon points="12,28 28,28 22,44 14,44" fill="#c62828" />
+        <ellipse cx="60" cy="28" rx="12" ry="5" fill="#b71c1c" />
+        <ellipse cx="9" cy="28" rx="7" ry="4" fill="rgba(255,120,0,0.85)" />
+        <ellipse cx="5" cy="28" rx="4" ry="2.5" fill="rgba(255,220,0,0.9)" />
+      </svg>
+    </div>
+
+    <!-- Plane 3: left→right, middle -->
+    <div class="plane p3">
+      <svg width="65" height="32" viewBox="0 0 120 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="60" cy="28" rx="52" ry="10" fill="#e8f5e9" />
+        <ellipse cx="96" cy="26" rx="14" ry="8" fill="#a5d6a7" />
+        <polygon points="110,28 120,28 110,24" fill="#81c784" />
+        <polygon points="45,28 85,28 75,8 55,8" fill="#66bb6a" />
+        <polygon points="45,28 85,28 75,48 55,48" fill="#388e3c" />
+        <polygon points="12,28 28,28 22,12 14,12" fill="#66bb6a" />
+        <polygon points="12,28 28,28 22,44 14,44" fill="#388e3c" />
+        <ellipse cx="60" cy="28" rx="12" ry="5" fill="#2e7d32" />
+        <ellipse cx="9" cy="28" rx="7" ry="4" fill="rgba(255,120,0,0.85)" />
+        <ellipse cx="5" cy="28" rx="4" ry="2.5" fill="rgba(255,220,0,0.9)" />
+      </svg>
+    </div>
+
+    <!-- Plane 4: diagonal TR -->
+    <div class="plane p4">
+      <svg width="55" height="28" viewBox="0 0 120 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="60" cy="28" rx="52" ry="10" fill="#fff9c4" />
+        <ellipse cx="96" cy="26" rx="14" ry="8" fill="#fff176" />
+        <polygon points="110,28 120,28 110,24" fill="#fdd835" />
+        <polygon points="45,28 85,28 75,8 55,8" fill="#fdd835" />
+        <polygon points="45,28 85,28 75,48 55,48" fill="#f57f17" />
+        <polygon points="12,28 28,28 22,12 14,12" fill="#fdd835" />
+        <polygon points="12,28 28,28 22,44 14,44" fill="#f57f17" />
+        <ellipse cx="60" cy="28" rx="12" ry="5" fill="#e65100" />
+        <ellipse cx="9" cy="28" rx="7" ry="4" fill="rgba(255,120,0,0.85)" />
+        <ellipse cx="5" cy="28" rx="4" ry="2.5" fill="rgba(255,220,0,0.9)" />
+      </svg>
+    </div>
+
+    <!-- Plane 5: diagonal TL (right to left) -->
+    <div class="plane p5 rtl">
+      <svg width="70" height="35" viewBox="0 0 120 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="60" cy="28" rx="52" ry="10" fill="#e3f2fd" />
+        <ellipse cx="96" cy="26" rx="14" ry="8" fill="#90caf9" />
+        <polygon points="110,28 120,28 110,24" fill="#64b5f6" />
+        <polygon points="45,28 85,28 75,8 55,8" fill="#42a5f5" />
+        <polygon points="45,28 85,28 75,48 55,48" fill="#1565c0" />
+        <polygon points="12,28 28,28 22,12 14,12" fill="#42a5f5" />
+        <polygon points="12,28 28,28 22,44 14,44" fill="#1565c0" />
+        <ellipse cx="60" cy="28" rx="12" ry="5" fill="#0d47a1" />
+        <ellipse cx="9" cy="28" rx="7" ry="4" fill="rgba(255,120,0,0.85)" />
+        <ellipse cx="5" cy="28" rx="4" ry="2.5" fill="rgba(255,220,0,0.9)" />
+      </svg>
+    </div>
+
+    <!-- Plane 6: left to right, bottom -->
+    <div class="plane p6">
+      <svg width="60" height="30" viewBox="0 0 120 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="60" cy="28" rx="52" ry="10" fill="#f3e5f5" />
+        <ellipse cx="96" cy="26" rx="14" ry="8" fill="#ce93d8" />
+        <polygon points="110,28 120,28 110,24" fill="#ab47bc" />
+        <polygon points="45,28 85,28 75,8 55,8" fill="#ab47bc" />
+        <polygon points="45,28 85,28 75,48 55,48" fill="#6a1b9a" />
+        <polygon points="12,28 28,28 22,12 14,12" fill="#ab47bc" />
+        <polygon points="12,28 28,28 22,44 14,44" fill="#6a1b9a" />
+        <ellipse cx="60" cy="28" rx="12" ry="5" fill="#4a148c" />
+        <ellipse cx="9" cy="28" rx="7" ry="4" fill="rgba(255,120,0,0.85)" />
+        <ellipse cx="5" cy="28" rx="4" ry="2.5" fill="rgba(255,220,0,0.9)" />
+      </svg>
+    </div>
+
+  </div>
+
+  <audio id="birthdaySong" autoplay loop>
+    <source src="music.mp3" type="audio/mp3" />
+    Your browser does not support the audio element.
+  </audio>
+
+  <div id="musicControl" class="playing">
+    <svg id="musicIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 18V5l12-2v13"></path>
+      <circle cx="6" cy="18" r="3"></circle>
+      <circle cx="18" cy="16" r="3"></circle>
+    </svg>
+  </div>
+
+  <div class="container">
+    <div class="heart"></div>
+    <div class="lyrics-container" id="lyrics"></div>
+  </div>
+
+  <script src="anime.min.js"></script>
+  <script src="scripts.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const audio = document.getElementById("birthdaySong");
+      const control = document.getElementById("musicControl");
+      const lyricsContainer = document.getElementById("lyrics");
+      audio.volume = 0.5;
+      audio.play().catch(() => { });
+      control.addEventListener("click", () => {
+        if (audio.paused) audio.play();
+        else audio.pause();
+      });
+      audio.addEventListener("play", () => control.classList.remove("paused"));
+      audio.addEventListener("pause", () => control.classList.add("paused"));
+      const lyrics = [
+        { time: 0500, text: "LADAAKU VIMAAN HAIN...✈️✈️" },
+        { time: 2800, text: "PAR TU MERI JAAN HAIN...!!" },
+        { time: 5500, text: "BISTAR YE TERA MERA.." },
+        { time: 8000, text: "ARRE JUNG KA MAIDAAN HAIN...!!!" },
+        { time: 11000, text: "LADAAKU VIMAAN HAIN...✈️✈️" },
+        { time: 13500, text: "PAR TU MERI JAAN HAIN...!!" },
+        { time: 16500, text: "BISTAR YE TERA MERA..." },
+      ];
+      let shown = new Set();
+      let lastTime = 0;
+      audio.addEventListener("timeupdate", () => {
+        const t = audio.currentTime * 1000;
+        if (t < lastTime) {
+          shown.clear();
+          lyricsContainer.innerHTML = "";
+        }
+        lyrics.forEach((lyric, idx) => {
+          if (t >= lyric.time && !shown.has(idx)) {
+            shown.add(idx);
+            showLine(lyric.text);
+          }
+        });
+        lastTime = t;
+      });
+      function showLine(text) {
+        lyricsContainer.innerHTML = "";
+        const line = document.createElement("div");
+        line.className = "lyric-line";
+        lyricsContainer.appendChild(line);
+        let delayAcc = 0;
+        text.split(" ").forEach(word => {
+          const w = document.createElement("div")
+          w.className = "word";
+          w.textContent = word;
+          line.appendChild(w);
+          setTimeout(() => {
+            anime({
+              targets: w,
+              opacity: [0, 1],
+              translateY: [30, 0],
+              duration: 900,
+              delay: anime.stagger(100),
+              easing: "easeOutBack"
+            });
+          }, delayAcc);
+          delayAcc += 250;
+        });
+        anime({
+          targets: line,
+          opacity: [0, 1],
+          duration: 600,
+          easing: "easeInOutSine"
+        });
+      }
+    });
+
+
+  </script>
+</body>
+
+</html>
